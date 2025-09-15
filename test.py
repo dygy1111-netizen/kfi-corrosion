@@ -5,7 +5,7 @@ import plotly.express as px
 # -----------------------------
 # 데이터 불러오기
 # -----------------------------
-df = pd.read_excel("테스트용.xlsx", sheet_name="Sheet1", engine="openpyxl")
+df = pd.read_excel("data.xlsx", sheet_name="Sheet1", engine="openpyxl")
 if "사용연수.1" in df.columns:
     df = df.drop(columns=["사용연수.1"])
 
