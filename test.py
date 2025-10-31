@@ -64,7 +64,7 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
 st.markdown("---")
 
 # -----------------------------
-# ③ 향후 부식 예측 및 기대수명  (가독성 개선 버전)
+# ③ 향후 부식 예측 및 기대수명 (표 형식 버전)
 # -----------------------------
 st.subheader("③ 향후 부식 예측 및 기대수명")
 
@@ -94,99 +94,57 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
     if len(filtered_pred) >= 10:
         평균부식률_조건 = filtered_pred["부식률"].mean()
         표본수 = len(filtered_pred)
-        전체평균 = df["부식률"].mean()
     else:
         평균부식률_조건 = df["부식률"].mean()
         표본수 = len(filtered_pred)
-        전체평균 = df["부식률"].mean()
-
-    # 🔹 카드1: 조건 요약
-    st.markdown(
-        f"""
-        <div style='background-color:#f8f9fa; border:1px solid #ddd; border-radius:10px;
-                    padding:15px 20px; margin-bottom:12px; width:65%;'>
-            <b>📊 조건 요약</b><br>
-            사용연수 구간: <b>{내연수_라벨}</b><br>
-            표본수: <b>{표본수}</b>개<br>
-            조건 평균 부식률: <b>{평균부식률_조건:.5f} mm/년</b><br>
-            전체 평균 부식률: <b>{전체평균:.5f} mm/년</b>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        st.warning(f"⚠️ 같은 연수구간 표본이 {표본수}개로 적어 전체 평균을 사용합니다.")
 
     # ⑤ 남은 기간 입력
     남은기간 = st.number_input("다음 정밀정기검사까지 남은 기간 (년)", min_value=0.0, value=3.0, step=0.5)
 
-    # ⑥ 예상 부식량 및 두께 계산
+    # ⑥ 예측 계산
     예상부식량 = 평균부식률_조건 * 남은기간
     예상두께 = 측정두께 - 예상부식량
 
-    # 🔹 카드2: 예측 결과
+    # 판정
+    if 예상두께 >= 3.2:
+        판정 = "✅ 적합 (합격)"
+        색상 = "#D4EDDA"  # 연한 초록
+    else:
+        판정 = "⚠️ 부적합 (불합격)"
+        색상 = "#F8D7DA"  # 연한 빨강
+
+    # 기대수명
+    if 평균부식률_조건 > 0:
+        기대수명 = (측정두께 - 3.2) / 평균부식률_조건
+        기대수명_str = f"{기대수명:.1f} 년"
+    else:
+        기대수명_str = "데이터 부족"
+
+    # ⑦ 결과 표 만들기
     st.markdown(
         f"""
-        <div style='background-color:#fefefe; border:1px solid #ccc; border-radius:10px;
-                    padding:15px 20px; margin-bottom:12px; width:65%;'>
-            <b>📉 향후 부식 예측 결과</b><br>
-            남은 기간: <b>{남은기간:.1f}년</b><br>
-            예상 부식량: <b>{예상부식량:.3f} mm</b><br>
-            {남은기간:.1f}년 후 예상 두께: <b>{예상두께:.3f} mm</b>
-        </div>
+        <table style='width:65%; border-collapse:collapse; margin-top:10px;'>
+            <tr style='background-color:#f0f2f6;'>
+                <th style='text-align:left; padding:8px; border-bottom:2px solid #ccc;'>항목</th>
+                <th style='text-align:left; padding:8px; border-bottom:2px solid #ccc;'>값</th>
+            </tr>
+            <tr><td style='padding:6px;'>사용연수 구간</td><td style='padding:6px;'>{내연수_라벨}</td></tr>
+            <tr><td style='padding:6px;'>표본수</td><td style='padding:6px;'>{표본수} 개</td></tr>
+            <tr><td style='padding:6px;'>해당 조건 평균 부식률</td><td style='padding:6px;'>{평균부식률_조건:.5f} mm/년</td></tr>
+            <tr><td style='padding:6px;'>다음 정밀정기검사까지 기간</td><td style='padding:6px;'>{남은기간:.1f} 년</td></tr>
+            <tr><td style='padding:6px;'>예상 부식량</td><td style='padding:6px;'>{예상부식량:.3f} mm</td></tr>
+            <tr><td style='padding:6px;'>예상 두께 ({남은기간:.1f}년 후)</td><td style='padding:6px;'>{예상두께:.3f} mm</td></tr>
+            <tr style='background-color:{색상};'>
+                <td style='padding:6px; font-weight:bold;'>판정 결과</td>
+                <td style='padding:6px; font-weight:bold;'>{판정}</td>
+            </tr>
+            <tr><td style='padding:6px;'>예상 잔여 수명 (3.2mm 도달 시)</td><td style='padding:6px;'>{기대수명_str}</td></tr>
+        </table>
         """,
         unsafe_allow_html=True
     )
 
-    # ⑦ 합격/부적합 판정
-    if 예상두께 >= 3.2:
-        st.markdown(
-            """
-            <div style='background-color:#e8f6ec; border-left:6px solid #28a745;
-                        border-radius:6px; padding:12px 18px; width:65%;'>
-                ✅ <b>정밀정기검사 예측 결과:</b> 적합 (합격 예상)
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            """
-            <div style='background-color:#fbeaea; border-left:6px solid #dc3545;
-                        border-radius:6px; padding:12px 18px; width:65%;'>
-                ⚠️ <b>정밀정기검사 예측 결과:</b> 부적합 (불합격 예상)
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # ⑧ 기대수명 계산
-    if 평균부식률_조건 > 0:
-        기대수명 = (측정두께 - 3.2) / 평균부식률_조건
-        if 기대수명 > 0:
-            st.markdown(
-                f"""
-                <div style='background-color:#f0f2f6; border:1px solid #ddd; border-radius:10px;
-                            padding:15px 20px; margin-top:10px; width:65%;'>
-                    <b>⏳ 예상 잔여 수명:</b> 약 <b>{기대수명:.1f}년</b> 남음 (3.2mm 도달 기준)
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                """
-                <div style='background-color:#fff3cd; border:1px solid #ffeeba; border-radius:10px;
-                            padding:15px 20px; margin-top:10px; width:65%;'>
-                    ⚠️ 이미 3.2mm 이하 상태일 수 있습니다.<br>
-                    입력값을 확인하거나 보강·교체 검토가 필요합니다.
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-    else:
-        st.warning("⚠️ 부식률 데이터가 부족하여 기대수명 계산이 어렵습니다.")
-
-
-st.markdown("---")
 
 # -----------------------------
 # ④ 조건에 맞는 표본 수 및 연수구간별 부식률표
