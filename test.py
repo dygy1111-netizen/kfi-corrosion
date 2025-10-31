@@ -164,7 +164,7 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
             .tbl-dark {{
                 width: 60%; /* 박스 두 개와 동일 */
                 border-collapse: collapse;
-                margin: 0 auto;
+                margin: 0;
                 margin-top: 15px;
                 border: 1px solid #374151;
                 font-size: 0.95rem;
