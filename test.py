@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
 # -----------------------------
 # 데이터 불러오기
 # -----------------------------
@@ -13,6 +14,15 @@ if "사용연수.1" in df.columns:
 # 페이지 설정
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
+import base64
+st.markdown(
+    """
+    <div style='text-align: center; background-color: black; padding: 15px 0;'>
+        <img src="data:image/jpeg;base64,{}" width="480">
+    </div>
+    """.format(base64.b64encode(open("logo_kor.jpg", "rb").read()).decode()),
+    unsafe_allow_html=True
+)
 st.title("⚡ 위험물탱크 평균 부식률 조회 시스템")
 st.markdown("---")
 
