@@ -13,26 +13,6 @@ if "사용연수.1" in df.columns:
 # 페이지 설정
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
-
-# ✅ 모바일에서 컬럼 깨짐/숨김 방지: min-width 해제 + ③ 표 폭 강제
-st.markdown("""
-<style>
-@media (max-width: 768px) {
-  /* 모든 가로 블록을 세로로 */
-  div[data-testid="stHorizontalBlock"] { flex-direction: column !important; }
-  /* 컬럼 최소폭 제거 (숨김 방지) */
-  div[data-testid="column"] {
-    width: 100% !important;
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
-  }
-  /* ③ 표를 모바일에서 가로 꽉 채우기 */
-  .tbl-dark { width: 100% !important; font-size: 0.9rem !important; }
-  .tbl-dark th, .tbl-dark td { padding: 6px !important; }
-}
-</style>
-""", unsafe_allow_html=True)
-
 st.title("⚡ 위험물탱크 평균 부식률 조회 시스템")
 st.markdown("---")
 
@@ -42,7 +22,9 @@ st.markdown("---")
 col_top_left, col_top_right = st.columns(2)
 
 with col_top_left:
+    # -----------------------------
     # ① 조건별 조회
+    # -----------------------------
     st.subheader("① 조건별 조회")
 
     mat_order = df["재질"].value_counts().index.tolist()
@@ -74,7 +56,9 @@ with col_top_left:
     filtered = df[cond]
 
 with col_top_right:
+    # -----------------------------
     # ② 내 탱크 데이터 입력
+    # -----------------------------
     st.subheader("② 내 탱크 데이터 입력")
 
     col1, col2, col3 = st.columns(3)
@@ -87,6 +71,7 @@ with col_top_right:
 
     내부식률 = None
     if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
+        # mm/년
         내부식률 = (설계두께 - 측정두께) / (사용연수_내탱크)
         st.info(f"🧮 내 탱크 계산된 부식률: **{내부식률:.5f} mm/년**")
 
@@ -98,69 +83,70 @@ st.markdown("---")
 col_mid_left, col_mid_right = st.columns(2)
 
 with col_mid_left:
+    # -----------------------------
     # ③ 향후 부식 예측 및 기대수명
+    # -----------------------------
     st.subheader("③ 향후 부식 예측 및 기대수명")
 
-    # ③-1) 표 스타일 (PC 기본)
+    # ✅ 테이블 다크테마를 강제(모바일 흰색 섞임 방지)
     st.markdown("""
         <style>
             .tbl-dark {
                 width: 98%;
                 border-collapse: collapse;
                 margin-top: 15px;
-                border: 1px solid #374151;
+                border: 1px solid #4b5563;
                 font-size: 0.95rem;
                 table-layout: fixed;
+                background-color: #111827; /* 전체 배경 */
+                color: #f3f4f6;            /* 기본 글자색 */
             }
             .tbl-dark th {
                 width: 40%;
                 text-align: left;
                 padding: 10px;
-                background-color: #1f2937;
-                color: #f9fafb;
-                border-bottom: 2px solid #4b5563;
+                background-color: #1f2937; /* 헤더 배경 */
+                color: #f9fafb;            /* 헤더 글자 */
+                border-bottom: 2px solid #374151;
                 white-space: nowrap;
             }
             .tbl-dark td {
                 width: 60%;
                 padding: 8px;
-                color: #e5e7eb;
+                color: #f3f4f6;
                 border-bottom: 1px solid #374151;
+                background-color: #111827; /* 기본 셀 배경 */
                 word-break: keep-all;
             }
-            .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
-            .result-row { font-weight: 600; }
+            .tbl-dark tr:nth-child(even) td {
+                background-color: #1f2937; /* 짝수 행 배경 */
+            }
+            .result-row {
+                font-weight: 600;
+            }
+            @media (max-width: 768px) {
+                .tbl-dark {
+                    width: 100% !important;
+                    font-size: 0.9rem !important;
+                }
+                .tbl-dark th, .tbl-dark td {
+                    padding: 6px !important;
+                }
+            }
         </style>
     """, unsafe_allow_html=True)
 
-    # ③-2) 입력 박스 (항상 렌더) — 49%, 49%
-    st.markdown("#### 🔧 부식률 예측 입력")
-    col_input1, col_input2 = st.columns([0.49, 0.49])
-    with col_input1:
-        산정방식 = st.selectbox(
-            "부식률 산정 방식",
-            ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
-            key="rate_mode"
-        )
-    with col_input2:
-        남은기간 = st.number_input(
-            "다음 정밀정기검사까지 남은 기간 (년)",
-            min_value=0.0, value=3.0, step=0.5,
-            key="years_left"
-        )
-
-    # ③-3) 입력이 충분하지 않으면 안내만 표시 (모바일에서도 섹션이 항상 보임)
-    if not (설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0):
-        st.info("상단 ②에서 설계두께/측정두께/사용연수를 입력하면 예측 결과가 표시됩니다.")
-    else:
-        # ③-4) 계산 로직 (입력 유효 시에만 실행)
+    if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
+        # 1) 사용연수 → 구간 라벨
         bins = [0, 10, 20, 30, 200]
         labels = ["10년 미만", "10년 이상", "20년 이상", "30년 이상"]
         내연수_라벨 = pd.cut([사용연수_내탱크], bins=bins, labels=labels, right=False)[0]
 
+        # df에 연수구간 생성(없으면)
         if "연수구간" not in df.columns:
             df["연수구간"] = pd.cut(df["사용연수"], bins=bins, labels=labels, right=False)
 
+        # 동일 조건 + 동일 연수구간 필터
         cond_base = (
             (df["재질"] == 재질) &
             (df["품명"] == 품명) &
@@ -172,6 +158,7 @@ with col_mid_left:
         cond_year = (df["연수구간"] == 내연수_라벨)
         filtered_pred = df[cond_base & cond_year]
 
+        # 평균 부식률(구간 포함)
         if len(filtered_pred) >= 10:
             평균부식률_조건 = filtered_pred["부식률"].mean()
             표본수 = len(filtered_pred)
@@ -179,6 +166,21 @@ with col_mid_left:
             평균부식률_조건 = df["부식률"].mean()
             표본수 = len(filtered_pred)
             st.warning(f"⚠️ 같은 구간 표본이 {표본수}개로 적어 전체 평균 사용")
+
+        # 입력 박스(49%, 49%)
+        col_input1, col_input2 = st.columns([0.49, 0.49])
+        with col_input1:
+            산정방식 = st.selectbox(
+                "부식률 산정 방식",
+                ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
+                key="rate_mode"
+            )
+        with col_input2:
+            남은기간 = st.number_input(
+                "다음 정밀정기검사까지 남은 기간 (년)",
+                min_value=0.0, value=3.0, step=0.5,
+                key="years_left"
+            )
 
         # 산정 방식별 대표 부식률
         if 산정방식 == "평균":
@@ -190,14 +192,14 @@ with col_mid_left:
         else:
             대표부식률 = filtered_pred["부식률"].quantile(0.9) if len(filtered_pred) >= 1 else 평균부식률_조건
 
-        # 하한/상한 처리는 대표부식률 계산 이후에 적용
+        # 너무 작은 부식률 하한
         if 대표부식률 < 0.0005:
             대표부식률 = 0.0005
 
+        # 예측 계산
         예상부식량 = 대표부식률 * 남은기간
         예상두께 = 측정두께 - 예상부식량
         기대수명 = (측정두께 - 3.2) / 대표부식률 if 대표부식률 > 0 else None
-
         if 기대수명 and 기대수명 > 100:
             기대수명_text = "100년 초과 (표시 생략)"
         elif 기대수명 and 기대수명 > 0:
@@ -205,6 +207,7 @@ with col_mid_left:
         else:
             기대수명_text = "3.2mm 이하 상태 가능"
 
+        # 판정
         if 예상두께 >= 3.2:
             판정 = "✅ 적합(합격)"
             판정색 = "#065f46"
@@ -214,12 +217,12 @@ with col_mid_left:
             판정색 = "#7f1d1d"
             판정글 = "#fee2e2"
 
-        # 결과표
+        # 결과 표
         st.markdown(f"""
             <table class="tbl-dark">
                 <tr><th>항목</th><th>값</th></tr>
-                <tr><td>사용연수 구간</td><td>{str(내연수_라벨)}</td></tr>
-                <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"}</td></tr>
+                <tr><td>사용연수 구간</td><td>{내연수_라벨}</td></tr>
+                <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"} </td></tr>
                 <tr><td>부식률 산정 방식</td><td>{산정방식}</td></tr>
                 <tr><td>대표 부식률</td><td>{대표부식률:.5f} mm/년</td></tr>
                 <tr><td>남은 기간</td><td>{남은기간:.1f} 년</td></tr>
@@ -233,7 +236,9 @@ with col_mid_left:
         """, unsafe_allow_html=True)
 
 with col_mid_right:
+    # -----------------------------
     # ④ 조건에 맞는 표본 수 및 연수구간별 부식률표
+    # -----------------------------
     st.subheader("④ 조건에 맞는 표본 수 및 연수구간별 부식률표")
 
     if len(filtered) < 30:
@@ -264,15 +269,21 @@ col_g1, col_g2 = st.columns(2)
 if len(filtered) >= 30:
     with col_g1:
         fig1 = px.bar(
-            grouped, x="연수구간", y="평균부식률", text="평균부식률",
-            color="평균부식률", color_continuous_scale=px.colors.sequential.Viridis,
-            title="조건별 사용연수 구간 평균 부식률", template="plotly_white"
+            grouped,
+            x="연수구간",
+            y="평균부식률",
+            text="평균부식률",
+            color="평균부식률",
+            color_continuous_scale=px.colors.sequential.Viridis,
+            title="조건별 사용연수 구간 평균 부식률",
+            template="plotly_white"
         )
         ymax = grouped["평균부식률"].max() * 2
         fig1.update_yaxes(range=[0, ymax])
         fig1.update_traces(
             texttemplate="%{text:.4f}<br>(n=%{customdata[0]})",
-            textposition="outside", customdata=grouped[["표본수"]].values
+            textposition="outside",
+            customdata=grouped[["표본수"]].values
         )
         st.plotly_chart(fig1, use_container_width=True)
 
@@ -294,7 +305,8 @@ st.markdown("---")
 st.subheader("⑥ 전체 데이터 요약")
 
 mat_avg = df.groupby("재질").agg(
-    평균부식률=("부식률", "mean"), 표본수=("부식률", "count")
+    평균부식률=("부식률","mean"),
+    표본수=("부식률","count")
 ).reset_index()
 mat_avg = mat_avg[mat_avg["표본수"] >= 300].sort_values("평균부식률")
 
