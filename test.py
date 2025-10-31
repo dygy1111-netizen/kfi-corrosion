@@ -93,45 +93,57 @@ with col_top_right:
 st.markdown("---")
 
 # =============================
-# 중단: ③ / ④ 나란히 배치
+# ③ 향후 부식 예측 및 기대수명
 # =============================
-col_mid_left, col_mid_right = st.columns(2)
-
 with col_mid_left:
-    # ③ 향후 부식 예측 및 기대수명
     st.subheader("③ 향후 부식 예측 및 기대수명")
 
-    # ③-1) 표 스타일 (PC 기본)
+    # ✅ 표 색상 수정 (모바일 흰색 배경 방지)
     st.markdown("""
         <style>
             .tbl-dark {
                 width: 98%;
                 border-collapse: collapse;
                 margin-top: 15px;
-                border: 1px solid #374151;
+                border: 1px solid #4b5563;
                 font-size: 0.95rem;
                 table-layout: fixed;
+                background-color: #111827; /* 전체 배경 */
+                color: #f3f4f6; /* 글자색 */
             }
             .tbl-dark th {
                 width: 40%;
                 text-align: left;
                 padding: 10px;
-                background-color: #1f2937;
+                background-color: #1f2937; /* 헤더 배경 */
                 color: #f9fafb;
-                border-bottom: 2px solid #4b5563;
+                border-bottom: 2px solid #374151;
                 white-space: nowrap;
             }
             .tbl-dark td {
                 width: 60%;
                 padding: 8px;
-                color: #e5e7eb;
+                color: #f3f4f6;
                 border-bottom: 1px solid #374151;
+                background-color: #111827; /* 기본 배경 */
                 word-break: keep-all;
             }
-            .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
-            .result-row { font-weight: 600; }
+            .tbl-dark tr:nth-child(even) td {
+                background-color: #1f2937; /* 짝수 행 배경 */
+            }
+            .result-row {
+                font-weight: 600;
+            }
+            @media (max-width: 768px) {
+                .tbl-dark {
+                    width: 100% !important;
+                    font-size: 0.9rem !important;
+                }
+                th, td { padding: 6px !important; }
+            }
         </style>
     """, unsafe_allow_html=True)
+
 
     # ③-2) 입력 박스 (항상 렌더) — 49%, 49%
     st.markdown("#### 🔧 부식률 예측 입력")
