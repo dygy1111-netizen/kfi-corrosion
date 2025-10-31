@@ -177,47 +177,59 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
     else:
         기대수명 = "데이터 부족"
 
-    # -----------------------------
-    # ⑩ 결과 표 (다크테마 대응)
-    # -----------------------------
-    st.markdown(
-        f"""
-        <style>
-            .tbl-dark {{
-                width: 65%; border-collapse: collapse; margin-top: 10px;
-                border: 1px solid #374151; font-size: 0.95rem;
-            }}
-            .tbl-dark th {{
-                text-align: left; padding: 10px;
-                background-color: #1f2937; color: #f9fafb;
-                border-bottom: 2px solid #4b5563;
-            }}
-            .tbl-dark td {{
-                padding: 8px; color: #e5e7eb;
-                border-bottom: 1px solid #374151;
-            }}
-            .tbl-dark tr:nth-child(even) td {{ background-color: #0b1220; }}
-            .result-row {{
-                background-color: {판정색};
-                color: {판정글};
-                font-weight: 600;
-            }}
-        </style>
-        <table class="tbl-dark">
-            <tr><th>항목</th><th>값</th></tr>
-            <tr><td>사용연수 구간</td><td>{내연수_라벨}</td></tr>
-            <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"}</td></tr>
-            <tr><td>부식률 산정 방식</td><td>{산정방식}</td></tr>
-            <tr><td>해당 조건 대표 부식률</td><td>{대표부식률:.5f} mm/년</td></tr>
-            <tr><td>다음 정밀정기검사까지 기간</td><td>{남은기간:.1f} 년</td></tr>
-            <tr><td>예상 부식량</td><td>{예상부식량:.3f} mm</td></tr>
-            <tr><td>예상 두께 ({남은기간:.1f}년 후)</td><td>{예상두께:.3f} mm</td></tr>
-            <tr class="result-row"><td>판정 결과</td><td>{판정}</td></tr>
-            <tr><td>예상 잔여 수명 (3.2mm 도달)</td><td>{기대수명}</td></tr>
-        </table>
-        """,
-        unsafe_allow_html=True
-    )
+# -----------------------------
+# ⑩ 결과 표 (다크테마 대응 + 고정 폭)
+# -----------------------------
+st.markdown(
+    f"""
+    <style>
+        .tbl-dark {{
+            width: 700px;  /* 전체 고정 폭 */
+            border-collapse: collapse;
+            margin-top: 10px;
+            border: 1px solid #374151;
+            font-size: 0.95rem;
+            table-layout: fixed; /* 고정 레이아웃 */
+        }}
+        .tbl-dark th {{
+            width: 200px; /* 항목 열 폭 */
+            text-align: left;
+            padding: 10px;
+            background-color: #1f2937;
+            color: #f9fafb;
+            border-bottom: 2px solid #4b5563;
+            white-space: nowrap;
+        }}
+        .tbl-dark td {{
+            width: 500px; /* 값 열 폭 */
+            padding: 8px;
+            color: #e5e7eb;
+            border-bottom: 1px solid #374151;
+            word-break: keep-all;
+        }}
+        .tbl-dark tr:nth-child(even) td {{ background-color: #0b1220; }}
+        .result-row {{
+            background-color: {판정색};
+            color: {판정글};
+            font-weight: 600;
+        }}
+    </style>
+    <table class="tbl-dark">
+        <tr><th>항목</th><th>값</th></tr>
+        <tr><td>사용연수 구간</td><td>{내연수_라벨}</td></tr>
+        <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"}</td></tr>
+        <tr><td>부식률 산정 방식</td><td>{산정방식}</td></tr>
+        <tr><td>해당 조건 대표 부식률</td><td>{대표부식률:.5f} mm/년</td></tr>
+        <tr><td>다음 정밀정기검사까지 기간</td><td>{남은기간:.1f} 년</td></tr>
+        <tr><td>예상 부식량</td><td>{예상부식량:.3f} mm</td></tr>
+        <tr><td>예상 두께 ({남은기간:.1f}년 후)</td><td>{예상두께:.3f} mm</td></tr>
+        <tr class="result-row"><td>판정 결과</td><td>{판정}</td></tr>
+        <tr><td>예상 잔여 수명 (3.2mm 도달)</td><td>{기대수명}</td></tr>
+    </table>
+    """,
+    unsafe_allow_html=True
+)
+
 
 
 
