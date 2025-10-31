@@ -21,9 +21,7 @@ st.markdown(
         position: absolute;
         top: 15px;
         right: 25px;
-        background-color: #000000;
         padding: 5px 10px;
-        border-radius: 8px;
     '>
         <img src="data:image/jpeg;base64,{}" width="240">
     </div>
