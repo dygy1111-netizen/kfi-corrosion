@@ -159,7 +159,7 @@ with col_mid_left:
         """, unsafe_allow_html=True)
 
         # 부식률 산정방식 + 남은기간 박스
-        col1, col2, empty = st.columns([0.5, 0.5, 0])
+        col1, col2, empty = st.columns([0.49, 0.49, 0.02])
         with col1:
             산정방식 = st.selectbox(
                 "부식률 산정 방식",
