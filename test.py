@@ -13,6 +13,25 @@ if "사용연수.1" in df.columns:
 # 페이지 설정
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
+
+# ✅ 모바일에서 컬럼 숨김/깨짐 현상 방지용 CSS (최소 수정)
+st.markdown("""
+<style>
+/* 모든 컬럼을 모바일에서 1열로 강제하고, 최소폭 제한 해제 */
+@media (max-width: 768px) {
+  div[data-testid="stHorizontalBlock"] { flex-direction: column !important; }
+  div[data-testid="column"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;   /* 컬럼 최소폭 제한을 해제해서 숨김 방지 */
+  }
+  /* ③ 표가 모바일에서 잘 보이도록 폭과 글자 크기 조정 */
+  .tbl-dark { width: 100% !important; font-size: 0.9rem !important; }
+  .tbl-dark th, .tbl-dark td { padding: 6px !important; }
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("⚡ 위험물탱크 평균 부식률 조회 시스템")
 st.markdown("---")
 
@@ -28,12 +47,18 @@ with col_top_left:
 
     재질 = st.selectbox("재질 선택", mat_order)
     품명 = st.selectbox("품명 선택", sorted(df["품명"].unique()))
-    탱크형상 = st.selectbox("탱크형상 선택", sorted(df["탱크형상"].unique()),
-                        index=sorted(df["탱크형상"].unique()).index("고정지붕"))
+    탱크형상 = st.selectbox(
+        "탱크형상 선택",
+        sorted(df["탱크형상"].unique()),
+        index=sorted(df["탱크형상"].unique()).index("고정지붕")
+    )
     전기방식 = st.selectbox("전기방식", ["O", "X"], index=1)
     히팅코일 = st.selectbox("히팅코일", ["O", "X"], index=1)
-    지역 = st.selectbox("지역 선택", sorted(df["지역"].unique()),
-                    index=sorted(df["지역"].unique()).index("울산"))
+    지역 = st.selectbox(
+        "지역 선택",
+        sorted(df["지역"].unique()),
+        index=sorted(df["지역"].unique()).index("울산")
+    )
 
     cond = (
         (df["재질"] == 재질) &
@@ -98,9 +123,7 @@ with col_mid_left:
             표본수 = len(filtered_pred)
             st.warning(f"⚠️ 같은 구간 표본이 {표본수}개로 적어 전체 평균 사용")
 
-        # ==============================
-        # ✅ 반응형 CSS (모바일 완전 대응)
-        # ==============================
+        # ③ 표 스타일 (기존 유지)
         st.markdown("""
             <style>
                 .tbl-dark {
@@ -129,34 +152,24 @@ with col_mid_left:
                 }
                 .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
                 .result-row { font-weight: 600; }
-                @media (max-width: 768px) {
-                    .tbl-dark { width: 100% !important; font-size: 0.9rem !important; }
-                    th, td { padding: 6px !important; }
-                }
             </style>
         """, unsafe_allow_html=True)
 
-        # ==============================
-        # 입력 박스 (49%, 49%, 2%) — 중첩 컬럼 제거
-        # ==============================
-        st.markdown("#### 🔧 부식률 예측 입력")
-        col_input1, col_input2 = st.columns([0.49, 0.49])
-        with col_input1:
+        # 부식률 산정방식 + 남은기간 (기존 columns 그대로)
+        col1, col2, _ = st.columns([0.49, 0.49, 0.02])
+        with col1:
             산정방식 = st.selectbox(
                 "부식률 산정 방식",
                 ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
                 key="rate_mode"
             )
-        with col_input2:
+        with col2:
             남은기간 = st.number_input(
                 "다음 정밀정기검사까지 남은 기간 (년)",
                 min_value=0.0, value=3.0, step=0.5,
                 key="years_left"
             )
 
-        # ==============================
-        # 예측 계산
-        # ==============================
         if 산정방식 == "평균":
             대표부식률 = 평균부식률_조건
         elif 산정방식 == "중위수(P50)":
@@ -188,9 +201,6 @@ with col_mid_left:
             판정색 = "#7f1d1d"
             판정글 = "#fee2e2"
 
-        # ==============================
-        # 결과표 (폭 98%)
-        # ==============================
         st.markdown(f"""
             <table class="tbl-dark">
                 <tr><th>항목</th><th>값</th></tr>
