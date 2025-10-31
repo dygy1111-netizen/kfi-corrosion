@@ -15,6 +15,22 @@ if "사용연수.1" in df.columns:
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
 import base64
+# ✅ 전체 배경을 완전 블랙(#000000)으로 지정
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #000000;
+        }
+        .stMarkdown, .stText, .stDataFrame, .stPlotlyChart, .stSelectbox, .stSlider {
+            color: white;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ✅ 로고 오른쪽 상단 고정
 st.markdown(
     """
     <div style='
