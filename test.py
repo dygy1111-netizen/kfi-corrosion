@@ -64,7 +64,7 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
 st.markdown("---")
 
 # -----------------------------
-# ③ 향후 부식 예측 및 기대수명 (표 + 가독성 + 보수적 산정)
+# ③ 향후 부식 예측 및 기대수명 (표 + 하한/상한 숨김)
 # -----------------------------
 st.subheader("③ 향후 부식 예측 및 기대수명")
 
@@ -74,7 +74,7 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
     labels = ["10년 미만", "10년 이상", "20년 이상", "30년 이상"]
     내연수_라벨 = pd.cut([사용연수_내탱크], bins=bins, labels=labels, right=False)[0]
 
-    # ② 연수구간 컬럼 생성(없을 때만)
+    # ② 연수구간 컬럼 생성
     if "연수구간" not in df.columns:
         df["연수구간"] = pd.cut(df["사용연수"], bins=bins, labels=labels, right=False)
 
@@ -90,89 +90,86 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
     filtered_pred = df[cond_base & (df["연수구간"] == 내연수_라벨)]
     표본수 = len(filtered_pred)
 
-    # ④ 부식률 산정 방식(보수성 선택) + 하한/상한 설정
-    colA, colB, colC = st.columns([1.2, 1, 1])
-    with colA:
-        산정방식 = st.selectbox("부식률 산정 방식", ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"])
-    with colB:
-        최소하한 = st.number_input("최소 부식률 하한(mm/년)", min_value=0.0, value=0.001, step=0.001, format="%.3f")
-    with colC:
-        수명표시상한 = st.number_input("기대수명 표기 상한(년)", min_value=1.0, value=50.0, step=1.0, format="%.0f")
+    # ④ 고정 파라미터 (하한/상한 숨김)
+    최소하한 = 0.001       # mm/년
+    수명표시상한 = 50.0     # 년
 
-    # 표본 부족 시 전체로 대체
+    # 부식률 산정 방식만 사용자 선택
+    산정방식 = st.selectbox(
+        "부식률 산정 방식 선택",
+        ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"]
+    )
+
+    # 표본 부족 시 전체 보정
     rates = (filtered_pred["부식률"] if 표본수 >= 10 else df["부식률"]).dropna()
     if 표본수 < 10:
-        st.warning(f"⚠️ 같은 연수구간 표본이 {표본수}개로 적어 전체 데이터로 보정하여 계산합니다.")
+        st.warning(f"⚠️ 같은 연수구간 표본이 {표본수}개로 적어 전체 데이터를 사용합니다.")
 
-    # ⑤ 산정방식에 따른 대표값 계산
+    # 대표 부식률 계산
     if 산정방식 == "평균":
         대표부식률 = rates.mean()
     elif 산정방식 == "중위수(P50)":
         대표부식률 = rates.median()
     elif 산정방식 == "상위 75% (보수)":
         대표부식률 = rates.quantile(0.75)
-    else:  # 상위 90%
+    else:
         대표부식률 = rates.quantile(0.90)
 
-    # 하한 적용(너무 낮으면 보수적 보정)
     대표부식률 = max(대표부식률, 최소하한)
 
-    # ⑥ 남은 기간 입력(상한 없음)
+    # ⑤ 남은 기간 입력
     남은기간 = st.number_input("다음 정밀정기검사까지 남은 기간 (년)", min_value=0.0, value=3.0, step=0.5)
 
-    # ⑦ 예측 계산 (부식률은 mm/년 기준)
+    # ⑥ 예측 계산
     예상부식량 = 대표부식률 * 남은기간
     예상두께 = 측정두께 - 예상부식량
 
-    # 판정
     if 예상두께 >= 3.2:
         판정 = "✅ 적합 (합격)"
-        판정색 = "#065f46"   # 짙은 초록(다크테마 가독)
+        판정색 = "#065f46"
         판정글 = "#d1fae5"
     else:
         판정 = "⚠️ 부적합 (불합격)"
-        판정색 = "#7f1d1d"   # 짙은 빨강
+        판정색 = "#7f1d1d"
         판정글 = "#fee2e2"
 
-    # 기대수명
+    # 기대수명 계산
     if 대표부식률 > 0:
         기대수명_raw = (측정두께 - 3.2) / 대표부식률
         기대수명 = f"≥ {수명표시상한:.0f} 년" if 기대수명_raw > 수명표시상한 else f"{기대수명_raw:.1f} 년"
     else:
         기대수명 = "데이터 부족"
 
-    # ⑧ 결과 표 (다크테마 가독성 강화)
+    # ⑦ 결과표 출력
     st.markdown(
         f"""
         <style>
-            .tbl-kfi {{
+            .tbl-dark {{
                 width: 65%; border-collapse: collapse; margin-top: 10px;
                 border: 1px solid #374151; font-size: 0.95rem;
             }}
-            .tbl-kfi th {{
-                text-align: left; padding: 10px; 
-                background-color: #111827; color: #e5e7eb; 
-                border-bottom: 2px solid #374151;
+            .tbl-dark th {{
+                text-align: left; padding: 10px;
+                background-color: #1f2937; color: #f9fafb;
+                border-bottom: 2px solid #4b5563;
             }}
-            .tbl-kfi td {{
-                padding: 8px; border-bottom: 1px solid #374151; color: #e5e7eb;
+            .tbl-dark td {{
+                padding: 8px; color: #e5e7eb;
+                border-bottom: 1px solid #374151;
             }}
-            .tbl-kfi tr:nth-child(even) td {{ background-color: #0b1220; }}
+            .tbl-dark tr:nth-child(even) td {{ background-color: #0b1220; }}
             .result-row {{
                 background-color: {판정색};
                 color: {판정글};
                 font-weight: 600;
             }}
-            .muted {{ color: #9ca3af; }}
         </style>
-        <table class="tbl-kfi">
-            <tr>
-                <th>항목</th><th>값</th>
-            </tr>
+        <table class="tbl-dark">
+            <tr><th>항목</th><th>값</th></tr>
             <tr><td>사용연수 구간</td><td>{내연수_라벨}</td></tr>
-            <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체로 보정)"}</td></tr>
+            <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"}</td></tr>
             <tr><td>부식률 산정 방식</td><td>{산정방식}</td></tr>
-            <tr><td>해당 조건 대표 부식률</td><td>{대표부식률:.5f} mm/년 <span class="muted">(하한 적용: {최소하한:.3f})</span></td></tr>
+            <tr><td>해당 조건 대표 부식률</td><td>{대표부식률:.5f} mm/년</td></tr>
             <tr><td>다음 정밀정기검사까지 기간</td><td>{남은기간:.1f} 년</td></tr>
             <tr><td>예상 부식량</td><td>{예상부식량:.3f} mm</td></tr>
             <tr><td>예상 두께 ({남은기간:.1f}년 후)</td><td>{예상두께:.3f} mm</td></tr>
@@ -182,6 +179,7 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
         """,
         unsafe_allow_html=True
     )
+
 
 
 
