@@ -114,7 +114,7 @@ with col_mid_left:
             <style>
                 /* PC 기준: 표 60%, 입력 2열 */
                 .tbl-dark {
-                    width: 60%;
+                    width: 98%;
                     border-collapse: collapse;
                     margin-top: 15px;
                     border: 1px solid #374151;
