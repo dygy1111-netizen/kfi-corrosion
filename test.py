@@ -17,18 +17,6 @@ st.title("⚡ 위험물탱크 평균 부식률 조회 시스템")
 st.markdown("---")
 
 # -----------------------------
-# 인쇄 모드 옵션
-# -----------------------------
-mode = st.radio("표시 모드 선택", ["화면 모드", "인쇄 모드"], horizontal=True)
-
-# -----------------------------
-# 페이지 나누기 함수 (인쇄모드 전용)
-# -----------------------------
-def page_break(last=False):
-    if mode == "인쇄 모드" and not last:
-        st.markdown("<div style='page-break-after: always'></div>", unsafe_allow_html=True)
-
-# -----------------------------
 # ① 조건별 조회 (1페이지)
 # -----------------------------
 st.subheader("① 조건별 조회")
