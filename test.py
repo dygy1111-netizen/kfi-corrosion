@@ -17,8 +17,15 @@ st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
 import base64
 st.markdown(
     """
-    <div style='text-align: center; background-color: black; padding: 15px 0;'>
-        <img src="data:image/jpeg;base64,{}" width="480">
+    <div style='
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        background-color: #000000;
+        padding: 5px 10px;
+        border-radius: 8px;
+    '>
+        <img src="data:image/jpeg;base64,{}" width="240">
     </div>
     """.format(base64.b64encode(open("logo_kor.jpg", "rb").read()).decode()),
     unsafe_allow_html=True
