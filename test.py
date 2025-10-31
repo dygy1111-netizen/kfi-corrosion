@@ -112,12 +112,19 @@ if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
         unsafe_allow_html=True
     )
 
-    col1, col2, empty = st.columns([0.3, 0.3, 0.4])  # 비율 40% + 40% + 여백 20%
-with col1:
-    산정방식 = st.selectbox("부식률 산정 방식", [...], key="rate_mode")
-with col2:
-    남은기간 = st.number_input("다음 정밀정기검사까지 남은 기간 (년)", min_value=0.0, value=3.0, step=0.5, key="years_left")
-
+    col1, col2 = st.columns(2)  # 비율 동일하게 1:1
+    with col1:
+        산정방식 = st.selectbox(
+            "부식률 산정 방식",
+            ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
+            key="rate_mode"
+        )
+    with col2:
+        남은기간 = st.number_input(
+            "다음 정밀정기검사까지 남은 기간 (년)",
+            min_value=0.0, value=3.0, step=0.5,
+            key="years_left"
+        )
 
     # ⑥ 한 줄 요약 표시
     st.markdown(
