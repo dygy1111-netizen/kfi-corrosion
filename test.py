@@ -14,18 +14,19 @@ if "사용연수.1" in df.columns:
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
 
-# ✅ 모바일에서 컬럼 숨김/깨짐 현상 방지용 CSS (최소 수정)
+# ✅ 모바일에서 컬럼 깨짐/숨김 방지: min-width 해제 + ③ 표 폭 강제
 st.markdown("""
 <style>
-/* 모든 컬럼을 모바일에서 1열로 강제하고, 최소폭 제한 해제 */
 @media (max-width: 768px) {
+  /* 모든 가로 블록을 세로로 */
   div[data-testid="stHorizontalBlock"] { flex-direction: column !important; }
+  /* 컬럼 최소폭 제거 (숨김 방지) */
   div[data-testid="column"] {
     width: 100% !important;
     flex: 1 1 100% !important;
-    min-width: 0 !important;   /* 컬럼 최소폭 제한을 해제해서 숨김 방지 */
+    min-width: 0 !important;
   }
-  /* ③ 표가 모바일에서 잘 보이도록 폭과 글자 크기 조정 */
+  /* ③ 표를 모바일에서 가로 꽉 채우기 */
   .tbl-dark { width: 100% !important; font-size: 0.9rem !important; }
   .tbl-dark th, .tbl-dark td { padding: 6px !important; }
 }
@@ -41,6 +42,7 @@ st.markdown("---")
 col_top_left, col_top_right = st.columns(2)
 
 with col_top_left:
+    # ① 조건별 조회
     st.subheader("① 조건별 조회")
 
     mat_order = df["재질"].value_counts().index.tolist()
@@ -60,6 +62,7 @@ with col_top_left:
         index=sorted(df["지역"].unique()).index("울산")
     )
 
+    # 조건 필터
     cond = (
         (df["재질"] == 재질) &
         (df["품명"] == 품명) &
@@ -71,6 +74,7 @@ with col_top_left:
     filtered = df[cond]
 
 with col_top_right:
+    # ② 내 탱크 데이터 입력
     st.subheader("② 내 탱크 데이터 입력")
 
     col1, col2, col3 = st.columns(3)
@@ -94,9 +98,62 @@ st.markdown("---")
 col_mid_left, col_mid_right = st.columns(2)
 
 with col_mid_left:
+    # ③ 향후 부식 예측 및 기대수명
     st.subheader("③ 향후 부식 예측 및 기대수명")
 
-    if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
+    # ③-1) 표 스타일 (PC 기본)
+    st.markdown("""
+        <style>
+            .tbl-dark {
+                width: 98%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                border: 1px solid #374151;
+                font-size: 0.95rem;
+                table-layout: fixed;
+            }
+            .tbl-dark th {
+                width: 40%;
+                text-align: left;
+                padding: 10px;
+                background-color: #1f2937;
+                color: #f9fafb;
+                border-bottom: 2px solid #4b5563;
+                white-space: nowrap;
+            }
+            .tbl-dark td {
+                width: 60%;
+                padding: 8px;
+                color: #e5e7eb;
+                border-bottom: 1px solid #374151;
+                word-break: keep-all;
+            }
+            .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
+            .result-row { font-weight: 600; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # ③-2) 입력 박스 (항상 렌더) — 49%, 49%
+    st.markdown("#### 🔧 부식률 예측 입력")
+    col_input1, col_input2 = st.columns([0.49, 0.49])
+    with col_input1:
+        산정방식 = st.selectbox(
+            "부식률 산정 방식",
+            ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
+            key="rate_mode"
+        )
+    with col_input2:
+        남은기간 = st.number_input(
+            "다음 정밀정기검사까지 남은 기간 (년)",
+            min_value=0.0, value=3.0, step=0.5,
+            key="years_left"
+        )
+
+    # ③-3) 입력이 충분하지 않으면 안내만 표시 (모바일에서도 섹션이 항상 보임)
+    if not (설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0):
+        st.info("상단 ②에서 설계두께/측정두께/사용연수를 입력하면 예측 결과가 표시됩니다.")
+    else:
+        # ③-4) 계산 로직 (입력 유효 시에만 실행)
         bins = [0, 10, 20, 30, 200]
         labels = ["10년 미만", "10년 이상", "20년 이상", "30년 이상"]
         내연수_라벨 = pd.cut([사용연수_내탱크], bins=bins, labels=labels, right=False)[0]
@@ -123,53 +180,7 @@ with col_mid_left:
             표본수 = len(filtered_pred)
             st.warning(f"⚠️ 같은 구간 표본이 {표본수}개로 적어 전체 평균 사용")
 
-        # ③ 표 스타일 (기존 유지)
-        st.markdown("""
-            <style>
-                .tbl-dark {
-                    width: 98%;
-                    border-collapse: collapse;
-                    margin-top: 15px;
-                    border: 1px solid #374151;
-                    font-size: 0.95rem;
-                    table-layout: fixed;
-                }
-                .tbl-dark th {
-                    width: 40%;
-                    text-align: left;
-                    padding: 10px;
-                    background-color: #1f2937;
-                    color: #f9fafb;
-                    border-bottom: 2px solid #4b5563;
-                    white-space: nowrap;
-                }
-                .tbl-dark td {
-                    width: 60%;
-                    padding: 8px;
-                    color: #e5e7eb;
-                    border-bottom: 1px solid #374151;
-                    word-break: keep-all;
-                }
-                .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
-                .result-row { font-weight: 600; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # 부식률 산정방식 + 남은기간 (기존 columns 그대로)
-        col1, col2, _ = st.columns([0.49, 0.49, 0.02])
-        with col1:
-            산정방식 = st.selectbox(
-                "부식률 산정 방식",
-                ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
-                key="rate_mode"
-            )
-        with col2:
-            남은기간 = st.number_input(
-                "다음 정밀정기검사까지 남은 기간 (년)",
-                min_value=0.0, value=3.0, step=0.5,
-                key="years_left"
-            )
-
+        # 산정 방식별 대표 부식률
         if 산정방식 == "평균":
             대표부식률 = 평균부식률_조건
         elif 산정방식 == "중위수(P50)":
@@ -179,12 +190,14 @@ with col_mid_left:
         else:
             대표부식률 = filtered_pred["부식률"].quantile(0.9) if len(filtered_pred) >= 1 else 평균부식률_조건
 
+        # 하한/상한 처리는 대표부식률 계산 이후에 적용
+        if 대표부식률 < 0.0005:
+            대표부식률 = 0.0005
+
         예상부식량 = 대표부식률 * 남은기간
         예상두께 = 측정두께 - 예상부식량
         기대수명 = (측정두께 - 3.2) / 대표부식률 if 대표부식률 > 0 else None
 
-        if 대표부식률 < 0.0005:
-            대표부식률 = 0.0005
         if 기대수명 and 기대수명 > 100:
             기대수명_text = "100년 초과 (표시 생략)"
         elif 기대수명 and 기대수명 > 0:
@@ -201,10 +214,11 @@ with col_mid_left:
             판정색 = "#7f1d1d"
             판정글 = "#fee2e2"
 
+        # 결과표
         st.markdown(f"""
             <table class="tbl-dark">
                 <tr><th>항목</th><th>값</th></tr>
-                <tr><td>사용연수 구간</td><td>{내연수_라벨}</td></tr>
+                <tr><td>사용연수 구간</td><td>{str(내연수_라벨)}</td></tr>
                 <tr><td>표본수</td><td>{표본수 if 표본수>=10 else f"{표본수} (전체보정)"}</td></tr>
                 <tr><td>부식률 산정 방식</td><td>{산정방식}</td></tr>
                 <tr><td>대표 부식률</td><td>{대표부식률:.5f} mm/년</td></tr>
@@ -219,6 +233,7 @@ with col_mid_left:
         """, unsafe_allow_html=True)
 
 with col_mid_right:
+    # ④ 조건에 맞는 표본 수 및 연수구간별 부식률표
     st.subheader("④ 조건에 맞는 표본 수 및 연수구간별 부식률표")
 
     if len(filtered) < 30:
