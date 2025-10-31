@@ -59,7 +59,7 @@ cond = (
 filtered = df[cond]
 
 # -----------------------------
-# 내 탱크 부식률 계산 (두께감소율 mm/년)
+# 내 탱크 부식률 계산 (mm/년)
 # -----------------------------
 내부식률 = None
 if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
@@ -94,7 +94,7 @@ else:
 st.markdown("---")
 
 # -----------------------------
-# ④ 그래프 비교
+# ④ 그래프 비교 (조건별 평균 vs 내탱크)
 # -----------------------------
 st.subheader("④ 그래프 비교")
 
@@ -132,3 +132,54 @@ if len(filtered) >= 30:
                            annotation_text="내 탱크", annotation_position="top left")
             fig2.update_layout(width=650, height=400)
             st.plotly_chart(fig2, use_container_width=False)
+
+st.markdown("---")
+
+# -----------------------------
+# ⑤ 전체 데이터 요약 (3개 그래프)
+# -----------------------------
+st.subheader("⑤ 전체 데이터 요약")
+
+# 재질별 평균
+mat_avg = df.groupby("재질").agg(
+    평균부식률=("부식률","mean"),
+    표본수=("부식률","count")
+).reset_index()
+mat_avg = mat_avg[mat_avg["표본수"] >= 300].sort_values("평균부식률")
+
+# 연수 구간별 평균
+bins_all = [0, 10, 20, 30, 200]
+labels_all = ["10년 미만", "10년 이상", "20년 이상", "30년 이상"]
+df["연수구간"] = pd.cut(df["사용연수"], bins=bins_all, labels=labels_all, right=False)
+year_avg = df.groupby("연수구간")["부식률"].mean().reset_index()
+
+# 지역별 평균
+region_avg = df.groupby("지역")["부식률"].mean().reset_index().sort_values("부식률")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.dataframe(mat_avg, use_container_width=True, height=200)
+    fig3 = px.bar(mat_avg, x="재질", y="평균부식률", color="평균부식률",
+                  color_continuous_scale=px.colors.sequential.Viridis,
+                  title="재질별 평균 부식률 (표본≥300)", template="plotly_white")
+    fig3.update_layout(width=650, height=400)
+    st.plotly_chart(fig3, use_container_width=False)
+
+with col2:
+    st.dataframe(year_avg, use_container_width=True, height=200)
+    fig4 = px.bar(year_avg, x="연수구간", y="부식률", color="부식률",
+                  color_continuous_scale=px.colors.sequential.Viridis,
+                  title="사용연수 구간별 평균 부식률", template="plotly_white")
+    ymax_all = year_avg["부식률"].max() * 2
+    fig4.update_yaxes(range=[0, ymax_all])
+    fig4.update_layout(width=650, height=400)
+    st.plotly_chart(fig4, use_container_width=False)
+
+with col3:
+    st.dataframe(region_avg, use_container_width=True, height=200)
+    fig5 = px.bar(region_avg, x="지역", y="부식률", color="부식률",
+                  color_continuous_scale=px.colors.sequential.Viridis,
+                  title="지역별 평균 부식률", template="plotly_white")
+    fig5.update_layout(width=650, height=400)
+    st.plotly_chart(fig5, use_container_width=False)
