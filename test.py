@@ -38,7 +38,6 @@ with col_top_left:
     지역 = st.selectbox("지역 선택", sorted(df["지역"].unique()), 
                     index=sorted(df["지역"].unique()).index("울산"))
 
-    # ✅ 조건 필터 먼저 계산
     cond = (
         (df["재질"] == 재질) &
         (df["품명"] == 품명) &
@@ -82,7 +81,6 @@ with col_mid_left:
     st.subheader("③ 향후 부식 예측 및 기대수명")
 
     if 설계두께 > 0 and 측정두께 > 0 and 사용연수_내탱크 > 0:
-        # 1) 사용연수 → 구간 라벨 산정
         bins = [0, 10, 20, 30, 200]
         labels = ["10년 미만", "10년 이상", "20년 이상", "30년 이상"]
         내연수_라벨 = pd.cut([사용연수_내탱크], bins=bins, labels=labels, right=False)[0]
@@ -109,10 +107,18 @@ with col_mid_left:
             표본수 = len(filtered_pred)
             st.warning(f"⚠️ 같은 구간 표본이 {표본수}개로 적어 전체 평균 사용")
 
-        # ✅ CSS: 반응형 & 표 스타일 고정
+        # ✅ CSS: 반응형 & 표 스타일 고정 (모바일 완전 대응)
         st.markdown("""
             <style>
-                /* PC 기준: 표 60%, 입력 2열 */
+                [data-testid="stHorizontalBlock"] {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: flex-start;
+                }
+                [data-testid="column"] {
+                    min-width: 300px;
+                    flex: 1 1 100%;
+                }
                 .tbl-dark {
                     width: 98%;
                     border-collapse: collapse;
@@ -140,26 +146,18 @@ with col_mid_left:
                 .tbl-dark tr:nth-child(even) td { background-color: #0b1220; }
                 .result-row { font-weight: 600; }
 
-                /* ✅ 모바일 대응 */
                 @media (max-width: 768px) {
-                    div[data-testid="stHorizontalBlock"] {
-                        flex-direction: column !important;
-                    }
-                    div[data-testid="column"] {
-                        width: 100% !important;
-                        flex: 1 1 100% !important;
-                    }
                     .tbl-dark {
                         width: 100% !important;
-                        font-size: 0.85rem !important;
+                        font-size: 0.9rem !important;
                     }
                     th, td { padding: 6px !important; }
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        # 부식률 산정방식 + 남은기간 박스
-        col1, col2, empty = st.columns([0.49, 0.49, 0.02])
+        # 부식률 산정방식 + 남은기간 박스 (49%, 49%, 2%)
+        col1, col2, _ = st.columns([0.49, 0.49, 0.02])
         with col1:
             산정방식 = st.selectbox(
                 "부식률 산정 방식",
@@ -183,7 +181,6 @@ with col_mid_left:
         else:
             대표부식률 = filtered_pred["부식률"].quantile(0.9) if len(filtered_pred) >= 1 else 평균부식률_조건
 
-        # 예측 계산
         예상부식량 = 대표부식률 * 남은기간
         예상두께 = 측정두께 - 예상부식량
         기대수명 = (측정두께 - 3.2) / 대표부식률 if 대표부식률 > 0 else None
@@ -206,7 +203,7 @@ with col_mid_left:
             판정색 = "#7f1d1d"
             판정글 = "#fee2e2"
 
-        # 결과 표 (입력 60% 폭에 맞춰 고정)
+        # 표 출력 (98% 폭)
         st.markdown(f"""
             <table class="tbl-dark">
                 <tr><th>항목</th><th>값</th></tr>
