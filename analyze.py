@@ -22,15 +22,18 @@ df: pd.DataFrame = st.session_state.get("filtered")
 히팅코일 = st.session_state.get("히팅코일")
 지역 = st.session_state.get("지역")
 
-# 🔥 문제였던 부분 수정 — st.stop() 제거 + 안전 처리
+df = st.session_state.get("filtered", None)
+
+# 🔥 조건이 설정되지 않은 초기 상태 → 분석탭 UI 유지 + 메시지 출력
 if df is None:
-    st.info("아직 조회 조건이 설정되지 않았습니다.")
+    st.info("조회 조건을 먼저 선택하세요.")
     st.stop()
 
-if len(df) == 0:
-    st.warning("현재 조건에 해당하는 표본이 없습니다. 조회 조건을 변경하세요.")
-    # UI는 유지하되, 아래 분석코드는 실행되면 오류가 나므로 중단
+# 🔥 filtered는 존재하지만 표본이 0개인 경우
+if isinstance(df, pd.DataFrame) and df.empty:
+    st.warning("해당 조건의 표본이 없습니다. 조건을 변경해 주세요.")
     st.stop()
+
 
 ALLOWABLE = 3.2  # 허용두께
 
