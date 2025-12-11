@@ -90,121 +90,136 @@ with colA:
     st.metric("Risk Index (0~100)", f"{risk:.1f}")
 with colB:
     st.metric("위험등급", grade)
-st.markdown("""
-### 📝 위험등급 평가 기준 설명
 
-Risk Index(0~100점)는 다음 3가지 요소를 합산하여 계산합니다.
+# =========================
+# 1-1) 위험등급 평가 기준 설명 (2열 배치)
+# =========================
+st.markdown("### 📝 위험등급 평가 기준 설명")
 
+colL, colR = st.columns(2)
+
+with colL:
+    st.markdown("""
 #### 1) 절대 위험도 (최대 40점)
 - 현재 두께가 허용두께(3.2mm)에 얼마나 근접했는지를 평가  
-- 여유가 적을수록 점수가 높아져 위험 판정
+- 여유가 적을수록 점수가 높아져 위험 판정  
 
 #### 2) 상대 위험도 (최대 30점)
 - 동일 조건 표본의 평균부식률 대비 현재 부식률이 얼마나 높은지 평가  
-- 평균 대비 2배 빠르면 약 30점 수준
+- 평균 대비 약 2배 빠르면 거의 최대점(30점) 부여  
+    """)
 
+with colR:
+    st.markdown("""
 #### 3) 미래 위험도 (최대 30점)
 - 향후 20년 후 예상두께를 계산  
-- 20년 후 허용두께 이하로 내려가는 경우 위험 점수 증가
+- 20년 후 허용두께(3.2mm) 이하로 내려갈수록 위험 점수 증가  
 
 #### 👉 최종 등급 기준
 - **A (0~29점):** 안전  
 - **B (30~54점):** 주의 필요  
 - **C (55~79점):** 경계 (추가 관리 필요)  
-- **D (80~100점):** 위험 (빠른 조치 필요)
-
----
-""")
+- **D (80~100점):** 위험 (빠른 조치 필요)  
+    """)
 
 st.markdown("---")
 
 # =========================
-# 2) 향후 20년 두께 예측 그래프
+# 2 & 3) 예측그래프 + 전기방식 비교 (한 행에 배치)
 # =========================
-st.markdown("## 📈 향후 20년 두께 예측 (AVG / P75 / P90)")
+col_left, col_right = st.columns(2)
 
-years = np.array([0, 5, 10, 20])
+# --------------------------------------
+# 왼쪽: 향후 20년 두께 예측 그래프
+# --------------------------------------
+with col_left:
+    st.markdown("## 📈 향후 20년 두께 예측 (AVG / P75 / P90)")
 
-def predict(rate):
-    return 측정두께 - rate * years
+    years = np.array([0, 5, 10, 20])
 
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=years, y=predict(p50), mode="lines+markers", name="평균(P50)"))
-fig.add_trace(go.Scatter(x=years, y=predict(p75), mode="lines+markers", name="보수(P75)"))
-fig.add_trace(go.Scatter(x=years, y=predict(p90), mode="lines+markers", name="매우보수(P90)"))
+    def predict(rate):
+        return 측정두께 - rate * years
 
-fig.add_hline(y=ALLOWABLE, line_dash="dot", annotation_text="허용두께 3.2mm")
-fig.update_layout(template="plotly_white", xaxis_title="경과년수(년)", yaxis_title="예상두께(mm)")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=years, y=predict(p50), mode="lines+markers", name="평균(P50)"))
+    fig.add_trace(go.Scatter(x=years, y=predict(p75), mode="lines+markers", name="보수(P75)"))
+    fig.add_trace(go.Scatter(x=years, y=predict(p90), mode="lines+markers", name="매우보수(P90)"))
 
-st.plotly_chart(fig, use_container_width=True)
-st.markdown("---")
-
-# =========================
-# 3) 동일 조건 전기방식 비교
-# =========================
-st.markdown("## ⚡ 동일 조건 전기방식 효과 분석 (O vs X)")
-
-df_source = st.session_state.get("full_df", None)
-
-if df_source is None:
-    st.warning("전체 데이터(df)가 필요합니다. 조회탭에서 full_df 저장 코드를 추가하세요.")
-else:
-    # 동일조건 (전기방식 제외)
-    cond = (
-        (df_source["재질"] == 재질) &
-        (df_source["품명"] == 품명) &
-        (df_source["탱크형상"] == 탱크형상) &
-        (df_source["히팅코일"] == 히팅코일) &
-        (df_source["지역"] == 지역)
-    )
-    
-    comp = df_source[cond].copy()
-    
-    # 사용연수 기반 그룹 평균
-    comp_O = comp[comp["전기방식"] == "O"].groupby("사용연수")["부식률"].mean().reset_index()
-    comp_X = comp[comp["전기방식"] == "X"].groupby("사용연수")["부식률"].mean().reset_index()
-
-    # 평균 수치 출력
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("전기방식 O 전체 평균부식률", f"{comp_O['부식률'].mean():.5f}" if len(comp_O) else "-")
-    with col2:
-        st.metric("전기방식 X 전체 평균부식률", f"{comp_X['부식률'].mean():.5f}" if len(comp_X) else "-")
-
-    # 꺾은선 그래프
-    fig_line = go.Figure()
-    
-    if len(comp_O):
-        fig_line.add_trace(go.Scatter(
-            x=comp_O["사용연수"], y=comp_O["부식률"],
-            mode="lines+markers",
-            name="전기방식 O",
-            line=dict(color="green")
-        ))
-    if len(comp_X):
-        fig_line.add_trace(go.Scatter(
-            x=comp_X["사용연수"], y=comp_X["부식률"],
-            mode="lines+markers",
-            name="전기방식 X",
-            line=dict(color="red")
-        ))
-
-    fig_line.update_layout(
+    fig.add_hline(y=ALLOWABLE, line_dash="dot", annotation_text="허용두께 3.2mm")
+    fig.update_layout(
         template="plotly_white",
-        xaxis_title="사용연수(년)",
-        yaxis_title="평균 부식률(mm/년)",
-        title="전기방식 유무에 따른 사용연수별 평균 부식률 비교"
+        xaxis_title="경과년수(년)",
+        yaxis_title="예상두께(mm)"
     )
 
-    st.plotly_chart(fig_line, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
-    # 전기방식 효과 계산
-    if len(comp_O) and len(comp_X):
-        diff = (1 - comp_O["부식률"].mean() / comp_X["부식률"].mean()) * 100
-        st.success(f"📉 전기방식 설치 시 평균 **{diff:.1f}%** 부식률 감소 효과")
+# --------------------------------------
+# 오른쪽: 동일 조건 전기방식 비교 (꺾은선 그래프)
+# --------------------------------------
+with col_right:
+    st.markdown("## ⚡ 전기방식 유무에 따른 부식률 비교")
+
+    df_source = st.session_state.get("full_df", None)
+
+    if df_source is None:
+        st.warning("전체 데이터(df)가 필요합니다. 조회탭에서 full_df 저장 코드를 추가하세요.")
     else:
-        st.info("전기방식 O/X 중 하나의 표본이 부족합니다.")
+        # 동일조건 (전기방식 제외)
+        cond = (
+            (df_source["재질"] == 재질) &
+            (df_source["품명"] == 품명) &
+            (df_source["탱크형상"] == 탱크형상) &
+            (df_source["히팅코일"] == 히팅코일) &
+            (df_source["지역"] == 지역)
+        )
+        
+        comp = df_source[cond].copy()
+        
+        # 사용연수 기반 그룹 평균
+        comp_O = comp[comp["전기방식"] == "O"].groupby("사용연수")["부식률"].mean().reset_index()
+        comp_X = comp[comp["전기방식"] == "X"].groupby("사용연수")["부식률"].mean().reset_index()
 
+        # 평균 수치 출력
+        mcol1, mcol2 = st.columns(2)
+        with mcol1:
+            st.metric("전기방식 O 전체 평균부식률", f"{comp_O['부식률'].mean():.5f}" if len(comp_O) else "-")
+        with mcol2:
+            st.metric("전기방식 X 전체 평균부식률", f"{comp_X['부식률'].mean():.5f}" if len(comp_X) else "-")
+
+        # 꺾은선 그래프
+        fig_line = go.Figure()
+        
+        if len(comp_O):
+            fig_line.add_trace(go.Scatter(
+                x=comp_O["사용연수"], y=comp_O["부식률"],
+                mode="lines+markers",
+                name="전기방식 O",
+                line=dict(color="green")
+            ))
+        if len(comp_X):
+            fig_line.add_trace(go.Scatter(
+                x=comp_X["사용연수"], y=comp_X["부식률"],
+                mode="lines+markers",
+                name="전기방식 X",
+                line=dict(color="red")
+            ))
+
+        fig_line.update_layout(
+            template="plotly_white",
+            xaxis_title="사용연수(년)",
+            yaxis_title="평균 부식률(mm/년)",
+            title="전기방식 유무에 따른 사용연수별 평균 부식률 비교"
+        )
+
+        st.plotly_chart(fig_line, use_container_width=True)
+
+        # 전기방식 효과 계산
+        if len(comp_O) and len(comp_X):
+            diff = (1 - comp_O["부식률"].mean() / comp_X["부식률"].mean()) * 100
+            st.success(f"📉 전기방식 설치 시 평균 **{diff:.1f}%** 부식률 감소 효과")
+        else:
+            st.info("전기방식 O/X 중 하나의 표본이 부족합니다.")
 
 st.markdown("---")
 
