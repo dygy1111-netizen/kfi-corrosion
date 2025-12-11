@@ -156,7 +156,7 @@ with left:
 # 3) 전기방식 유무 비교 그래프 (5년 구간 + 스무딩)
 # ------------------------------
 with right:
-    st.markdown("## ⚡ 전기방식 유무 비교 (5년 구간 + 스무딩)")
+    st.markdown("## ⚡ 전기방식설비 유무 비교")
 
     df_source = st.session_state.get("full_df", None)
 
@@ -212,7 +212,7 @@ with right:
                 fig2.add_trace(go.Scatter(
                     x=comp_O["사용연수구간"],
                     y=comp_O["부식률_smooth"],
-                    name="전기방식 O (스무딩)",
+                    name="전기방식설비 설치",
                     mode="lines+markers",
                     line=dict(color="green", width=3)
                 ))
@@ -221,16 +221,16 @@ with right:
                 fig2.add_trace(go.Scatter(
                     x=comp_X["사용연수구간"],
                     y=comp_X["부식률_smooth"],
-                    name="전기방식 X (스무딩)",
+                    name="전기방식설비 미설치",
                     mode="lines+markers",
                     line=dict(color="red", width=3)
                 ))
 
             fig2.update_layout(
                 template="plotly_white",
-                xaxis_title="사용연수 (5년 단위 구간)",
+                xaxis_title="사용연수",
                 yaxis_title="평균 부식률(mm/년)",
-                title="전기방식 유무에 따른 부식률 경향 (5년 구간 + 스무딩)"
+                title="전기방식설비 유무에 따른 부식률 경향"
             )
 
             st.plotly_chart(fig2, use_container_width=True)
@@ -240,7 +240,7 @@ with right:
                 diff = (1 - comp_O["부식률"].mean() / comp_X["부식률"].mean()) * 100
                 st.success(f"📉 전기방식 설치 시 평균 **{diff:.1f}%** 부식률 감소 효과")
             else:
-                st.info("전기방식 O 또는 X 중 하나의 표본이 부족합니다.")
+                st.info("전기방식설비 설치 유무 표본이 부족합니다.")
 
 
 st.caption("※ 본 분석은 참고자료이며, 최종 안전판정은 관련 법령·기준에 따릅니다.")
