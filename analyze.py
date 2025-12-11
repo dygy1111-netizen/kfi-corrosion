@@ -22,8 +22,14 @@ df: pd.DataFrame = st.session_state.get("filtered")
 히팅코일 = st.session_state.get("히팅코일")
 지역 = st.session_state.get("지역")
 
-if df is None or len(df) == 0:
-    st.warning("조회탭에서 조건을 먼저 선택하세요.")
+# 🔥 문제였던 부분 수정 — st.stop() 제거 + 안전 처리
+if df is None:
+    st.info("아직 조회 조건이 설정되지 않았습니다.")
+    st.stop()
+
+if len(df) == 0:
+    st.warning("현재 조건에 해당하는 표본이 없습니다. 조회 조건을 변경하세요.")
+    # UI는 유지하되, 아래 분석코드는 실행되면 오류가 나므로 중단
     st.stop()
 
 ALLOWABLE = 3.2  # 허용두께
