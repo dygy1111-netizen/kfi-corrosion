@@ -69,6 +69,17 @@ with tab_query:
         if len(filtered) > 0:
            st.session_state["filtered"] = filtered
 
+        # 분석탭에서 동일조건 비교에 필요한 값 저장
+        st.session_state["재질"] = 재질
+        st.session_state["품명"] = 품명
+        st.session_state["탱크형상"] = 탱크형상
+        st.session_state["히팅코일"] = 히팅코일
+        st.session_state["지역"] = 지역
+        st.session_state["전기방식"] = 전기방식
+
+        # 전체 데이터 저장 (전기방식 비교에 필요)
+        st.session_state["full_df"] = df
+
 
     with col_top_right:
         # -----------------------------
