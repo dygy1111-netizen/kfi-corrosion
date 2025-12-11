@@ -66,8 +66,7 @@ with tab_query:
         filtered = df[cond]
 
         # 👉 추후 분석탭에서 재사용할 수 있게 저장(선택)
-        if len(filtered) > 0:
-           st.session_state["filtered"] = filtered
+        st.session_state["filtered"] = filtered
 
         # 분석탭에서 동일조건 비교에 필요한 값 저장
         st.session_state["재질"] = 재질
