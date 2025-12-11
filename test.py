@@ -158,6 +158,12 @@ with tab_query:
                     ["평균", "중위수(P50)", "상위 75% (보수)", "상위 90% (매우 보수)"],
                     key="rate_mode"
                 )
+            with col_input2:
+                남은기간 = st.number_input(
+                    "다음 정밀정기검사까지 남은 기간 (년)",
+                    min_value=0.0, value=3.0, step=0.5,
+                    key="years_left"
+                )
 
             # 산정 방식별 대표 부식률
             if 산정방식 == "평균":
