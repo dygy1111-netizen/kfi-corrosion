@@ -5,7 +5,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.markdown("## 📊 결과 분석")
 st.caption("조회탭에서 선택한 조건 표본과 입력값만으로 통계를 생성합니다.")
 
 # =========================
