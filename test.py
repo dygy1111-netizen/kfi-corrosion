@@ -346,7 +346,5 @@ with tab_query:
 # 📊 분석탭
 # =============================
 with tab_analysis:
-    st.subheader("📊 결과분석")
-
     # analyze.py 실행 (탭을 클릭하면 해당 파일 내용 실행됨)
     import analyze

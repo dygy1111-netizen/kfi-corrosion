@@ -7,8 +7,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.caption("조회탭에서 선택한 조건과 내 탱크 데이터를 기반으로 심층 위험분석을 제공합니다.")
-
 # =========================
 # 0) 입력/상태 확인
 # =========================
