@@ -94,7 +94,7 @@ def local_position_and_assess(df_in: pd.DataFrame, my_rate: float):
     pct = float((s <= my_rate).sum() / len(s) * 100.0) if len(s) else None
 
     # 간이 판정(보수성 슬라이더)
-    factor = {"낮음": 1.2, "보통": 1.5, "높음": 2.0}[st.select_slider("보수성(권고 수위)", ["낮음","보통","높음"], value="보통")]
+    factor = 1.5
     thr = aggr["mean"] * factor if aggr["mean"] is not None else None
     if thr is None:
         msg = "조건 평균 부식률을 계산할 수 없습니다."
