@@ -344,6 +344,9 @@ with tab_query:
 # =============================
 # 📊 분석탭
 # =============================
+import importlib
+
 with tab_analysis:
-    # analyze.py 실행 (탭을 클릭하면 해당 파일 내용 실행됨)
-    import analyze
+    analyze = importlib.import_module("analyze")
+    importlib.reload(analyze)
+
