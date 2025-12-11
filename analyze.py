@@ -4,41 +4,46 @@ import io
 import numpy as np
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 # =========================
 # 0) 입력/상태 확인
 # =========================
-df: pd.DataFrame = st.session_state.get("filtered")
-내부식률 = st.session_state.get("내부식률")
-측정두께 = st.session_state.get("측정두께")
-사용연수_내탱크 = st.session_state.get("사용연수_내탱크")
 
-# 조회탭 조건들
-재질 = st.session_state.get("재질")
-품명 = st.session_state.get("품명")
-탱크형상 = st.session_state.get("탱크형상")
-히팅코일 = st.session_state.get("히팅코일")
-지역 = st.session_state.get("지역")
-
+# 조회값들 가져오기
 df = st.session_state.get("filtered", None)
+내부식률 = st.session_state.get("내부식률", None)
+측정두께 = st.session_state.get("측정두께", None)
+사용연수_내탱크 = st.session_state.get("사용연수_내탱크", None)
 
-# 🔥 조건이 설정되지 않은 초기 상태 → 분석탭 UI 유지 + 메시지 출력
+재질 = st.session_state.get("재질", None)
+품명 = st.session_state.get("품명", None)
+탱크형상 = st.session_state.get("탱크형상", None)
+히팅코일 = st.session_state.get("히팅코일", None)
+지역 = st.session_state.get("지역", None)
+
+# 🔥 초기 상태: 조회탭에서 아무것도 선택되지 않았을 때
 if df is None:
     st.info("조회 조건을 먼저 선택하세요.")
     st.stop()
 
-# 🔥 filtered는 존재하지만 표본이 0개인 경우
+# 🔥 표본 0개 → 분석 불가 메시지 출력 (UI 유지)
 if isinstance(df, pd.DataFrame) and df.empty:
     st.warning("해당 조건의 표본이 없습니다. 조건을 변경해 주세요.")
     st.stop()
 
+# 🔥 내 탱크 입력값이 없을 경우 → 일부 분석 비활성화
+if 내부식률 is None or 측정두께 is None:
+    st.warning("내 탱크 데이터가 없어 일부 분석을 진행할 수 없습니다.")
+    st.stop()
 
 ALLOWABLE = 3.2  # 허용두께
 
-# 기본 통계
+# =========================
+# 기본 통계 계산
+# =========================
 df_valid = df["부식률"].astype(float).dropna()
+
 mean_r = max(df_valid.mean(), 0.0005)
 p50 = max(df_valid.quantile(0.50), 0.0005)
 p75 = max(df_valid.quantile(0.75), 0.0005)
@@ -48,27 +53,22 @@ p90 = max(df_valid.quantile(0.90), 0.0005)
 # 1) Risk Index 계산
 # =========================
 def compute_risk_index(my_rate, my_thk, years):
-    if pd.isna(my_rate) or pd.isna(my_thk):
-        return None, None
 
     # 절대 위험 (0~40점)
     margin = my_thk - ALLOWABLE
     abs_score = min(40, max(0, (5 - margin)) / 5 * 40)
 
-    # 상대 위험 (0~30점) — 표본 대비 속도
+    # 상대 위험 (0~30점)
     rel_score = min(30, (my_rate / mean_r) * 15)
 
-    # 미래 위험 (0~30점) — 20년 후 예측
+    # 미래 위험 (0~30점)
     pred20 = my_thk - my_rate * 20
-    if pred20 <= ALLOWABLE:
-        fut_score = 30
-    else:
-        fut_score = max(0, (10 - pred20) * 3)
+    fut_score = 30 if pred20 <= ALLOWABLE else max(0, (10 - pred20) * 3)
 
     total = abs_score + rel_score + fut_score
     total = min(total, 100)
 
-    # 등급 분류
+    # 등급
     if total < 30:
         grade = "A (안전)"
     elif total < 55:
@@ -82,18 +82,19 @@ def compute_risk_index(my_rate, my_thk, years):
 
 
 st.markdown("## 📌 위험등급 평가 (Risk Index)")
+
 risk, grade = compute_risk_index(내부식률, 측정두께, 사용연수_내탱크)
 
 colA, colB = st.columns(2)
 with colA:
-    st.metric("Risk Index (0~100)", f"{risk:.1f}" if risk else "-")
+    st.metric("Risk Index (0~100)", f"{risk:.1f}")
 with colB:
-    st.metric("위험등급", grade if grade else "-")
+    st.metric("위험등급", grade)
 
 st.markdown("---")
 
 # =========================
-# 2) 향후 20년 예측 그래프
+# 2) 향후 20년 두께 예측 그래프
 # =========================
 st.markdown("## 📈 향후 20년 두께 예측 (AVG / P75 / P90)")
 
@@ -103,9 +104,10 @@ def predict(rate):
     return 측정두께 - rate * years
 
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=years, y=predict(p50), name="평균(P50)", mode="lines+markers"))
-fig.add_trace(go.Scatter(x=years, y=predict(p75), name="보수(P75)", mode="lines+markers"))
-fig.add_trace(go.Scatter(x=years, y=predict(p90), name="매우보수(P90)", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=years, y=predict(p50), mode="lines+markers", name="평균(P50)"))
+fig.add_trace(go.Scatter(x=years, y=predict(p75), mode="lines+markers", name="보수(P75)"))
+fig.add_trace(go.Scatter(x=years, y=predict(p90), mode="lines+markers", name="매우보수(P90)"))
+
 fig.add_hline(y=ALLOWABLE, line_dash="dot", annotation_text="허용두께 3.2mm")
 fig.update_layout(template="plotly_white", xaxis_title="경과년수(년)", yaxis_title="예상두께(mm)")
 
@@ -117,15 +119,12 @@ st.markdown("---")
 # =========================
 st.markdown("## ⚡ 동일 조건 전기방식 효과 분석 (O vs X)")
 
-# 동일조건 필터 (전기방식 제외)
-df_same = df.copy()
-
-# 전기방식만 제외한 동일 조건으로 원본 전체 df에서 비교
 df_source = st.session_state.get("full_df", None)
+
 if df_source is None:
-    # 조회탭에서 전체 df를 session_state["full_df"]로 저장하도록 추가 필요
-    st.warning("전체 데이터(df)가 필요합니다. 조회탭에서 full_df 저장 코드를 추가하세요.")
+    st.warning("전체 데이터(df)가 저장되지 않았습니다. 조회탭 설정을 확인하세요.")
 else:
+    # 동일조건(전기방식 제외)
     cond = (
         (df_source["재질"] == 재질) &
         (df_source["품명"] == 품명) &
@@ -135,11 +134,10 @@ else:
     )
     comp = df_source[cond]
 
-    comp_O = comp[comp["전기방식"] == "O"]["부식률"].astype(float).dropna()
-    comp_X = comp[comp["전기방식"] == "X"]["부식률"].astype(float).dropna()
+    comp_O = comp[comp["전기방식"] == "O"]["부식률"].astype(float)
+    comp_X = comp[comp["전기방식"] == "X"]["부식률"].astype(float)
 
     col1, col2 = st.columns(2)
-
     with col1:
         st.metric("전기방식 O 평균부식률", f"{comp_O.mean():.5f}" if len(comp_O) else "-")
         st.metric("전기방식 X 평균부식률", f"{comp_X.mean():.5f}" if len(comp_X) else "-")
@@ -147,14 +145,16 @@ else:
     with col2:
         if len(comp_O) and len(comp_X):
             diff = (1 - comp_O.mean() / comp_X.mean()) * 100
-            st.metric("전기방식 효과", f"{diff:.1f}% 감소 효과")
+            st.metric("전기방식 효과", f"{diff:.1f}% 부식률 감소")
         else:
-            st.info("전기방식 O/X 중 하나의 표본이 부족합니다.")
+            st.info("전기방식 O 또는 X 표본이 부족합니다.")
 
     if len(comp_O) or len(comp_X):
         fig2 = go.Figure()
-        fig2.add_trace(go.Box(y=comp_O, name="전기방식 O"))
-        fig2.add_trace(go.Box(y=comp_X, name="전기방식 X"))
+        if len(comp_O):
+            fig2.add_trace(go.Box(y=comp_O, name="전기방식 O"))
+        if len(comp_X):
+            fig2.add_trace(go.Box(y=comp_X, name="전기방식 X"))
         fig2.update_layout(template="plotly_white", yaxis_title="부식률(mm/년)")
         st.plotly_chart(fig2, use_container_width=True)
 
