@@ -66,7 +66,9 @@ with tab_query:
         filtered = df[cond]
 
         # 👉 추후 분석탭에서 재사용할 수 있게 저장(선택)
-        st.session_state["filtered"] = filtered
+        if len(filtered) > 0:
+           st.session_state["filtered"] = filtered
+
 
     with col_top_right:
         # -----------------------------
