@@ -153,40 +153,94 @@ with left:
     st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------
-# 3) 전기방식 유무 비교 그래프
+# 3) 전기방식 유무 비교 그래프 (5년 구간 + 스무딩)
 # ------------------------------
 with right:
-    st.markdown("## ⚡ 전기방식 유무 비교")
+    st.markdown("## ⚡ 전기방식 유무 비교 (5년 구간 + 스무딩)")
 
-    df_source = st.session_state.get("full_df")
-    cond = (
-        (df_source["재질"] == 재질) &
-        (df_source["품명"] == 품명) &
-        (df_source["탱크형상"] == 탱크형상) &
-        (df_source["히팅코일"] == 히팅코일) &
-        (df_source["지역"] == 지역)
-    )
+    df_source = st.session_state.get("full_df", None)
 
-    comp = df_source[cond]
+    if df_source is None:
+        st.warning("전체 데이터(df)를 찾을 수 없습니다. 조회탭에서 먼저 조회를 실행하세요.")
+    else:
+        # 조회탭과 동일 조건(전기방식만 제외)
+        cond = (
+            (df_source["재질"] == 재질) &
+            (df_source["품명"] == 품명) &
+            (df_source["탱크형상"] == 탱크형상) &
+            (df_source["히팅코일"] == 히팅코일) &
+            (df_source["지역"] == 지역)
+        )
 
-    comp_O = comp[comp["전기방식"] == "O"].groupby("사용연수")["부식률"].mean().reset_index()
-    comp_X = comp[comp["전기방식"] == "X"].groupby("사용연수")["부식률"].mean().reset_index()
+        comp = df_source[cond].copy()
 
-    fig2 = go.Figure()
-    if len(comp_O):
-        fig2.add_trace(go.Scatter(x=comp_O["사용연수"], y=comp_O["부식률"],
-                                  name="전기방식 O", mode="lines+markers", line=dict(color="green")))
-    if len(comp_X):
-        fig2.add_trace(go.Scatter(x=comp_X["사용연수"], y=comp_X["부식률"],
-                                  name="전기방식 X", mode="lines+markers", line=dict(color="red")))
+        if comp.empty:
+            st.info("해당 조건에서 전기방식 O/X 비교 가능한 표본이 없습니다.")
+        else:
+            # 🔹 5년 단위 사용연수 구간 생성 (0,5,10,15,...)
+            comp["사용연수구간"] = (comp["사용연수"] // 5) * 5
 
-    fig2.update_layout(template="plotly_white",
-                       xaxis_title="사용연수(년)", yaxis_title="부식률(mm/년)")
+            # O / X 각각 5년 구간별 평균 부식률
+            comp_O = (
+                comp[comp["전기방식"] == "O"]
+                .groupby("사용연수구간")["부식률"]
+                .mean()
+                .reset_index()
+                .sort_values("사용연수구간")
+            )
+            comp_X = (
+                comp[comp["전기방식"] == "X"]
+                .groupby("사용연수구간")["부식률"]
+                .mean()
+                .reset_index()
+                .sort_values("사용연수구간")
+            )
 
-    st.plotly_chart(fig2, use_container_width=True)
+            # 🔹 이동평균(스무딩) 함수
+            def smooth(series, window=2):
+                return series.rolling(window=window, min_periods=1).mean()
 
-    if len(comp_O) and len(comp_X):
-        diff = (1 - comp_O["부식률"].mean() / comp_X["부식률"].mean()) * 100
-        st.success(f"📉 전기방식 설치 시 평균 **{diff:.1f}%** 부식률 감소 효과")
+            if len(comp_O):
+                comp_O["부식률_smooth"] = smooth(comp_O["부식률"])
+            if len(comp_X):
+                comp_X["부식률_smooth"] = smooth(comp_X["부식률"])
+
+            # 🔹 그래프 그리기
+            fig2 = go.Figure()
+
+            if len(comp_O):
+                fig2.add_trace(go.Scatter(
+                    x=comp_O["사용연수구간"],
+                    y=comp_O["부식률_smooth"],
+                    name="전기방식 O (스무딩)",
+                    mode="lines+markers",
+                    line=dict(color="green", width=3)
+                ))
+
+            if len(comp_X):
+                fig2.add_trace(go.Scatter(
+                    x=comp_X["사용연수구간"],
+                    y=comp_X["부식률_smooth"],
+                    name="전기방식 X (스무딩)",
+                    mode="lines+markers",
+                    line=dict(color="red", width=3)
+                ))
+
+            fig2.update_layout(
+                template="plotly_white",
+                xaxis_title="사용연수 (5년 단위 구간)",
+                yaxis_title="평균 부식률(mm/년)",
+                title="전기방식 유무에 따른 부식률 경향 (5년 구간 + 스무딩)"
+            )
+
+            st.plotly_chart(fig2, use_container_width=True)
+
+            # 🔹 전체 평균 기준 효과 메시지
+            if len(comp_O) and len(comp_X):
+                diff = (1 - comp_O["부식률"].mean() / comp_X["부식률"].mean()) * 100
+                st.success(f"📉 전기방식 설치 시 평균 **{diff:.1f}%** 부식률 감소 효과")
+            else:
+                st.info("전기방식 O 또는 X 중 하나의 표본이 부족합니다.")
+
 
 st.caption("※ 본 분석은 참고자료이며, 최종 안전판정은 관련 법령·기준에 따릅니다.")
