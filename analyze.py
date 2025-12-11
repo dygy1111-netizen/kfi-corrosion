@@ -90,6 +90,31 @@ with colA:
     st.metric("Risk Index (0~100)", f"{risk:.1f}")
 with colB:
     st.metric("위험등급", grade)
+st.markdown("""
+### 📝 위험등급 평가 기준 설명
+
+Risk Index(0~100점)는 다음 3가지 요소를 합산하여 계산합니다.
+
+#### 1) 절대 위험도 (최대 40점)
+- 현재 두께가 허용두께(3.2mm)에 얼마나 근접했는지를 평가  
+- 여유가 적을수록 점수가 높아져 위험 판정
+
+#### 2) 상대 위험도 (최대 30점)
+- 동일 조건 표본의 평균부식률 대비 현재 부식률이 얼마나 높은지 평가  
+- 평균 대비 2배 빠르면 약 30점 수준
+
+#### 3) 미래 위험도 (최대 30점)
+- 향후 20년 후 예상두께를 계산  
+- 20년 후 허용두께 이하로 내려가는 경우 위험 점수 증가
+
+#### 👉 최종 등급 기준
+- **A (0~29점):** 안전  
+- **B (30~54점):** 주의 필요  
+- **C (55~79점):** 경계 (추가 관리 필요)  
+- **D (80~100점):** 위험 (빠른 조치 필요)
+
+---
+""")
 
 st.markdown("---")
 
@@ -117,7 +142,7 @@ st.markdown("---")
 # =========================
 # 3) 동일 조건 전기방식 비교
 # =========================
-st.markdown("## ⚡ 동일 조건 전기방식 효과 분석 (O vs X)")
+st.markdown("## ⚡ 동일 조건에서의 전기방식설비 유무에따른 효과 분석")
 
 df_source = st.session_state.get("full_df", None)
 
@@ -139,8 +164,8 @@ else:
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("전기방식 O 평균부식률", f"{comp_O.mean():.5f}" if len(comp_O) else "-")
-        st.metric("전기방식 X 평균부식률", f"{comp_X.mean():.5f}" if len(comp_X) else "-")
+        st.metric("전기방식설비 설치 평균부식률", f"{comp_O.mean():.5f}" if len(comp_O) else "-")
+        st.metric("전기방식설비 미설치 평균부식률", f"{comp_X.mean():.5f}" if len(comp_X) else "-")
 
     with col2:
         if len(comp_O) and len(comp_X):
