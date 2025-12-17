@@ -21,8 +21,8 @@ st.markdown(
     .main-title {
         text-align: center;
         font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 2.2rem;   /* PC에서는 큼 */
+        margin-bottom: 15px;
+        font-size: 5.2rem;   /* PC에서는 큼 */
         line-height: 1.2;
     }
 
@@ -36,7 +36,7 @@ st.markdown(
     /* 화면 폭이 600px 이하일 때 (모바일) */
     @media (max-width: 600px) {
         .main-title {
-            font-size: 1.4rem;
+            font-size: 1.8rem;
         }
     }
     </style>
