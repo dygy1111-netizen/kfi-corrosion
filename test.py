@@ -16,15 +16,41 @@ st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
 
 st.markdown(
     """
-    <h2 style="text-align:center; margin-bottom:10px;">
+    <style>
+    /* 기본값: PC 화면 */
+    .main-title {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 2.2rem;   /* PC에서는 큼 */
+        line-height: 1.2;
+    }
+
+    /* 화면 폭이 900px 이하일 때 (노트북/태블릿) */
+    @media (max-width: 900px) {
+        .main-title {
+            font-size: 1.7rem;
+        }
+    }
+
+    /* 화면 폭이 600px 이하일 때 (모바일) */
+    @media (max-width: 600px) {
+        .main-title {
+            font-size: 1.4rem;
+        }
+    }
+    </style>
+
+    <div class="main-title">
         위험물탱크 기대수명<br>
         예측 프로그램
-    </h2>
+    </div>
     """,
     unsafe_allow_html=True
 )
 
 st.markdown("---")
+
 
 
 # =============================
