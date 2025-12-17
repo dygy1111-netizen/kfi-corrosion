@@ -184,7 +184,28 @@ with left:
 # 3) 전기방식 유무 비교 그래프 (5년 구간 + 스무딩)
 # ------------------------------
 with right:
-    st.markdown("## ⚡ 전기방식설비 유무 비교")
+    st.markdown(
+    """
+    <style>
+    .section-title-mobile {
+        font-weight: 600;
+        margin: 12px 0 8px 0;
+        font-size: 1.5rem;   /* PC, 태블릿 유지 */
+    }
+
+    @media (max-width: 600px) {
+        .section-title-mobile {
+            font-size: 1.2rem;   /* 모바일에서만 축소 */
+        }
+    }
+    </style>
+
+    <div class="section-title-mobile">
+        ⚡ 전기방식설비 유무 비교
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
 
     df_source = st.session_state.get("full_df", None)
 
