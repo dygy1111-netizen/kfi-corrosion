@@ -69,7 +69,35 @@ def compute_risk_index(my_rate, my_thk):
 
 risk, (grade_text, grade_color) = compute_risk_index(내부식률, 측정두께)
 
-st.markdown("## 📌 위험등급 평가 (Risk Index)")
+st.markdown(
+    """
+    <style>
+    .section-title {
+        font-weight: 600;
+        margin: 12px 0 8px 0;
+        font-size: 1.6rem;   /* PC 기본 크기 */
+    }
+
+    @media (max-width: 900px) {
+        .section-title {
+            font-size: 1.3rem;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .section-title {
+            font-size: 1.1rem;
+        }
+    }
+    </style>
+
+    <div class="section-title">
+        📌 위험등급 평가 (Risk Index)
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 risk_col1, risk_col2 = st.columns([1, 1])
 
