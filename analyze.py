@@ -75,7 +75,7 @@ st.markdown(
     .section-title {
         font-weight: 600;
         margin: 12px 0 8px 0;
-        font-size: 1.6rem;   /* PC 기본 크기 */
+        font-size: 2.5rem;   /* PC 기본 크기 */
     }
 
     @media (max-width: 900px) {
@@ -86,7 +86,7 @@ st.markdown(
 
     @media (max-width: 600px) {
         .section-title {
-            font-size: 1.1rem;
+            font-size: 2.0rem;
         }
     }
     </style>
