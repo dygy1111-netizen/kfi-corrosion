@@ -279,7 +279,6 @@ with right:
                 template="plotly_white",
                 xaxis_title="사용연수",
                 yaxis_title="평균 부식률(mm/년)",
-                title="전기방식설비 유무에 따른 부식률 경향"
             )
 
             st.plotly_chart(fig2, use_container_width=True)
