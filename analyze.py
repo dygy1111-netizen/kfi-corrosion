@@ -189,13 +189,13 @@ with right:
     <style>
     .section-title-mobile {
         font-weight: 600;
-        margin: 12px 0 8px 0;
-        font-size: 1.5rem;   /* PC, 태블릿 유지 */
+        margin: 15px 0 8px 0;
+        font-size: 2.0rem;   /* PC, 태블릿 유지 */
     }
 
     @media (max-width: 600px) {
         .section-title-mobile {
-            font-size: 1.2rem;   /* 모바일에서만 축소 */
+            font-size: 1.5rem;   /* 모바일에서만 축소 */
         }
     }
     </style>
