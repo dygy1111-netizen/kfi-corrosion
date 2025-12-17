@@ -86,7 +86,7 @@ st.markdown(
 
     @media (max-width: 600px) {
         .section-title {
-            font-size: 2.0rem;
+            font-size: 1.5rem;
         }
     }
     </style>
