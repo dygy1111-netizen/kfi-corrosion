@@ -13,7 +13,7 @@ if "사용연수.1" in df.columns:
 # 페이지 설정
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
-st.title("위험물탱크 기대수명 예측 프로그램")
+st.title("위험물탱크 기대수명<br> 예측 프로그램")
 st.markdown("---")
 
 # =============================
