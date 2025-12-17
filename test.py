@@ -13,8 +13,19 @@ if "사용연수.1" in df.columns:
 # 페이지 설정
 # -----------------------------
 st.set_page_config(page_title="위험물탱크 부식률 조회", layout="wide")
-st.title("위험물탱크 기대수명<br> 예측 프로그램")
+
+st.markdown(
+    """
+    <h2 style="text-align:center; margin-bottom:10px;">
+        위험물탱크 기대수명<br>
+        예측 프로그램
+    </h2>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("---")
+
 
 # =============================
 # 탭 생성
